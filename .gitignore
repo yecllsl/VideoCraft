@@ -1,0 +1,29 @@
+# 本机中间预览与媒体文件（约定：媒体与产物都在 NAS，本地只留轻量记录）
+**/review/
+*.mp4
+*.mov
+*.mkv
+*.jpg
+*.jpeg
+*.png
+*.wav
+*.mp3
+
+# 可重建的发布打包产物
+*.zip
+
+# 工具本地状态：截图、会话记忆、IDE 配置
+/.screenshots/
+/.workbuddy/
+/.trae/
+
+# 凭据与日志（令牌只从环境变量读取；曾发生日志明文泄露令牌的事故）
+.env
+.env.*
+!.env.example
+*.log
+
+# 系统缩略 / 目录配置文件
+Thumbs.db
+Desktop.ini
+.DS_Store
