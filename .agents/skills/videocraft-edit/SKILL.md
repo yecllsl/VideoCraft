@@ -22,7 +22,7 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 | 字幕 | `nas://projects/test/<项目>/captions/` |
 | 成片 | `nas://output/test/<项目>/` |
 | NAS SMB | `\\192.168.100.58\videocraft-{raw,projects,output}`（raw 只读，projects / output 可写） |
-| 成片规格 | 1920×1080 / 25 fps |
+| 成片规格 | 1920×1080 / 60 fps |
 
 只有 `<项目>`（项目名，也是 `nas://raw/` 下的目录名）由每次任务给出。
 
@@ -83,7 +83,7 @@ ffmpeg -y -i "<空镜>.MP4" -vf "fps=2.5,scale=480:-2,tile=4x4" -frames:v 1 <she
 
 ## 5. 合成
 
-`submit_assemble` 已验证字段：`title`、`size`（`[1920,1080]`）、`fps`（`25`）、`shots`；每个 shot 用 `video`、可选 `audio`、`start`、`duration`。
+`submit_assemble` 已验证字段：`title`、`size`（`[1920,1080]`）、`fps`（`60`）、`shots`；每个 shot 用 `video`、可选 `audio`、`start`、`duration`。
 
 - 每个 shot 的 audio 从自身 0 秒播放，`start` 只作用于画面；**不能在同一 audio 文件上做「中段插入」**。
 - 空镜作为独立镜头插入（时长加总）并保留自身环境声；口播镜头整段保留。
@@ -102,7 +102,7 @@ ffmpeg -hide_banner -nostats -i "<成片>.mp4" -vf blackdetect=d=0.1:pix_th=0.10
 ffmpeg -hide_banner -nostats -i "<成片>.mp4" -af "silencedetect=noise=-35dB:d=2" -vn -f null -
 ```
 
-确认 1920×1080 / 25 fps / 有音轨 / 时长 ≈ 各口播段之和 + 空镜插入时长，抽关键衔接点画面目检，并与第 1 步基线比对确认未覆盖既有文件。
+确认 1920×1080 / 60 fps / 有音轨 / 时长 ≈ 各口播段之和 + 空镜插入时长，抽关键衔接点画面目检，并与第 1 步基线比对确认未覆盖既有文件。
 
 旁挂字幕：按 storyboard 里每个口播镜头的**成片时间轴起点**偏移合并逐段 SRT，写成与成片同 stem 的 `.srt`。偏移必须从本次 storyboard 现算，**禁止复用任何历史样例的偏移值**（空镜布局一变即失效）。
 
