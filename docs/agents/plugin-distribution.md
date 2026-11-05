@@ -7,7 +7,7 @@
 
 ### 服务端固有（必须解决，否则 100% 用户复现"需要认证"）
 
-已核实（2026-11-04，测试环境 `/opt/videocraft/`）：
+已核实（2026-11-04，服务端测试环境 `/opt/videocraft/`）：
 
 - MCP 使用 MCP Python SDK **2.3.0** 的 bearer-auth 中间件。
 - `mcp/videocraft_mcp/remote.py` 的 `derive_auth()` 把 `issuer_url` 与 `resource_server_url` **都指向 MCP 服务自身**——即声明"我既是受保护资源，又是授权服务器"。
@@ -58,7 +58,7 @@ SDK 已自带组件（`mcp/server/auth/handlers/`：`authorize.py` / `token.py` 
 
 **验收标准**
 
-- WorkBuddy 桌面版用**标准 HTTP 连接器**（`type: http` + `headers`）完成 OAuth 后连上并列出 6 个工具。
+- WorkBuddy 桌面版用**标准 HTTP 连接器**（`type: http` + `headers`）完成 OAuth 后连上并列出当前 7 个工具。
 - 官方 MCP SDK 客户端 `streamable_http_client` 在**不注入自定义头**的情况下能完成 OAuth 并连接。
 - 现有 OpenCode 路径（`oauth:false` + 静态 Bearer）不回归。
 - 无凭据请求仍返回 401 + 正确的 `WWW-Authenticate`，但元数据指向可达的 AS。
@@ -95,7 +95,7 @@ SDK 已自带组件（`mcp/server/auth/handlers/`：`authorize.py` / `token.py` 
 
 ### 2.3 多环境隔离（面向终端用户）
 
-- "开发环境"对终端用户无意义，发布版默认只暴露测试/生产入口；开发入口置于 `disabledMcpServers`，需要时由用户显式启用。
+- "服务端开发环境"对终端用户无意义，发布版默认只暴露测试/生产入口；开发入口置于 `disabledMcpServers`，需要时由用户显式启用。
 - 可写数据按环境分区（`dev/` / `test/`）、输出名唯一、禁止覆盖既有成果——这些约束在插件层要再校验一次，不能只依赖服务端。
 
 ### 2.4 Skill 设计

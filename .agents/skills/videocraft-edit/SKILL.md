@@ -5,19 +5,19 @@ description: 在 VideoCraft 远程 MCP 上盘点 NAS 素材、逐段生成旁挂
 
 # VideoCraft 剪辑全流程
 
-**核心原则**：只执行已在测试环境跑通的行为；未在真实运行里验证过的工具能力不要补写、不要猜测。媒体与产物都在 NAS，本地只放轻量记录，不复制媒体。
+**核心原则**：只执行已在服务端测试环境跑通的行为；未在真实运行里验证过的工具能力不要补写、不要猜测。媒体与产物都在服务端 NAS，客户端工作目录只放轻量记录，不复制媒体。
 
 OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 按需加载；也可直接点名 `videocraft-edit`。
 
 ## 0. 运行环境（地址固定，不要改）
 
-面向局域网内的 OpenCode V2 项目目录。以下地址由服务端固定，不要参数化或替换：
+本 skill 运行在客户端（Windows 侧）工作目录的 OpenCode V2 项目根；服务端开发环境不参与剪辑流程。以下地址由服务端测试环境固定，不要参数化或替换：
 
 | 项 | 固定值 |
 |---|---|
-| MCP | `http://192.168.88.4:8000/mcp`；项目根 `opencode.json` 里 `oauth: false` + 静态 Bearer |
+| MCP | 服务端测试环境 `http://192.168.88.4:8000/mcp`；客户端项目根 `opencode.json` 里 `oauth: false` + 静态 Bearer |
 | 令牌 | `opencode.json` 用 `{env:VIDEOCRAFT_MCP_TOKEN}` 引用，**不写进任何文件、命令行或日志** |
-| 命名空间 | `test`（服务端 `[storage].namespace`） |
+| 命名空间 | `test`（服务端测试环境 `[storage].namespace`） |
 | 素材 | `nas://raw/<项目>/`（只读） |
 | 字幕 | `nas://projects/test/<项目>/captions/` |
 | 成片 | `nas://output/test/<项目>/` |
@@ -28,9 +28,9 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 
 工具面（7 个）：`videocraft_selfcheck`、`probe_media`、`extract_frames`、`strict_subtitles`、`submit_assemble`、`get_job_status`、`cancel_job`（部署 `strict_subtitles` 前为 6 个）。
 
-首次运行前置：OpenCode V2 打开的是解压后的项目根；`VIDEOCRAFT_MCP_TOKEN` 已设置且被进程继承；局域网可达 `192.168.88.4:8000` 与 `192.168.100.58`；服务端 MCP / Worker 在跑、三个存储根已挂载；项目根下已有 `projects/<项目>/` 与 `.scratch/videocraft-workflow/`。
+首次运行前置：客户端 OpenCode V2 打开的是解压后的项目根；`VIDEOCRAFT_MCP_TOKEN` 已设置且被进程继承；客户端可达 `192.168.88.4:8000` 与 `192.168.100.58`；服务端测试环境 MCP / Worker 在跑、三个存储根已挂载；项目根下已有 `projects/<项目>/` 与 `.scratch/videocraft-workflow/`。
 
-> `oauth: false` 是直连静态 Bearer 的关键，**不要删**；删掉后 OpenCode 会进入 OAuth，而服务端没有授权服务器，必然卡在 401。
+> `oauth: false` 是直连静态 Bearer 的关键，**不要删**；删掉后 OpenCode 会进入 OAuth，而服务端测试环境没有授权服务器，必然卡在 401。
 
 ## 1. 预检
 
@@ -93,7 +93,7 @@ ffmpeg -y -i "<空镜>.MP4" -vf "fps=2.5,scale=480:-2,tile=4x4" -frames:v 1 <she
 
 ## 6. 校验
 
-在**服务端**执行（需具备服务端命令通道；局域网内也可经 SMB 直接读取成片）：
+在**服务端测试环境**执行（需具备服务端命令通道；客户端也可经 SMB 直接读取成片）：
 
 ```bash
 ffprobe -v error -show_entries stream=codec_name,codec_type,width,height,r_frame_rate,sample_rate,channels \
@@ -108,7 +108,7 @@ ffmpeg -hide_banner -nostats -i "<成片>.mp4" -af "silencedetect=noise=-35dB:d=
 
 ## 7. 记录与清理
 
-在已「已确认」的 `mapping.md` 中回填实际空镜区间、各段 SRT 段数、成片路径 / 大小 / 时长、任务 ID 与方案偏差；更新 `.scratch/videocraft-workflow/progress.md`。清理服务端 `/tmp` 与本机中间预览，保留审批记录与候选稿。
+在已「已确认」的 `mapping.md` 中回填实际空镜区间、各段 SRT 段数、成片路径 / 大小 / 时长、任务 ID 与方案偏差；更新 `.scratch/videocraft-workflow/progress.md`。清理服务端测试环境 `/tmp` 与客户端中间预览，保留审批记录与候选稿。
 
 ## 常见故障
 
@@ -120,7 +120,7 @@ ffmpeg -hide_banner -nostats -i "<成片>.mp4" -af "silencedetect=noise=-35dB:d=
 | `TOOL_TIMEOUT` | CPU 冷加载 >60s；服务端超时设 180；超时后仍可能发布 SRT，先查目标再重试 |
 | `PREVIEW_TOO_LARGE` | 高分辨率 HEVC 抽帧超限；改服务端 ffmpeg 联系表，不据此推断画面 |
 | `INVALID_URI` / `OUTPUT_EXISTS` | 命名空间 / 后缀守卫与独占创建；换合法唯一路径，不覆盖、不绕开 |
-| 本机打不开 NAS | 未接入该 LAN 或 VPN；改服务端核验，并在交付记录写明限制 |
+| 客户端打不开 NAS | 未接入该 LAN 或 VPN；改由服务端测试环境核验，并在交付记录写明限制 |
 
 ## 红线
 

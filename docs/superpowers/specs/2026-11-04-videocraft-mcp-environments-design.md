@@ -2,12 +2,12 @@
 
 ## 目的
 
-让当前 Windows 工作目录默认连接现有测试 MCP 服务，同时保留一个明确、按需使用开发目录的途径；认证凭证不保存在项目配置中。
+让客户端（Windows 侧）工作目录默认连接服务端测试环境的 MCP 服务，同时保留一个明确、按需使用服务端开发环境的途径；认证凭证不保存在项目配置中。
 
 ## 目标
 
-- 测试环境 `/opt/videocraft/` 的 MCP 与 Worker 服务保持运行且不作改动。
-- 开发环境 `/root/projects/videocraft/` 不配置为开机常驻服务；仅通过客户端显式启动 SSH stdio MCP。
+- 服务端测试环境 `/opt/videocraft/` 的 MCP 与 Worker 服务保持运行且不作改动。
+- 服务端开发环境 `/root/projects/videocraft/` 不配置为开机常驻服务；仅通过客户端工作目录中的 MCP 配置显式启动 SSH stdio MCP。
 - 将本目录 `opencode.json` 中的明文令牌改为 OpenCode V2 环境变量引用 `{env:VIDEOCRAFT_MCP_TOKEN}`。
 - 验证测试 MCP 连通性及开发入口配置，不调用会写入媒体或提交剪辑任务的工具。
 

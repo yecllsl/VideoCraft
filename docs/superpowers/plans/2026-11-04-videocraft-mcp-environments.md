@@ -2,7 +2,7 @@
 
 > **执行要求：**按任务逐项执行，并用复选框记录进度。实施前须先取得用户对设计和本计划的确认。
 
-**目标：**安全配置当前 Windows 工作目录，使其默认使用测试 MCP，并提供安全、按需使用开发 MCP 的途径。
+**目标：**安全配置客户端（Windows 侧）工作目录，使其默认使用服务端测试环境的 MCP，并提供安全、按需使用服务端开发环境 MCP 的途径。
 
 **方案结构：**OpenCode V2 项目配置通过 Windows 用户环境变量读取测试服务令牌。开发服务保持 stdio 方式；只有在确认无需修改远端内容即可通过 SSH 启动后，才配置对应入口。
 
@@ -12,7 +12,7 @@
 
 ## 全局约束
 
-- 测试环境 `/opt/videocraft/` 的 MCP 与 Worker 保持运行，不作改动。
+- 服务端测试环境 `/opt/videocraft/` 的 MCP 与 Worker 保持运行，不作改动。
 - 不终止由 VS Code 管理的 MCP 进程。
 - Bearer 令牌不写入项目文件，也不出现在命令输出中。
 - 不创建或启用开发环境 systemd 服务或 HTTP 监听。
@@ -55,6 +55,7 @@
 - [x] 添加独立且默认禁用的 SSH stdio MCP 配置，并检查 JSON 格式及默认禁用行为。
 - [x] 无需另建远端配置；开发入口保持禁用，未启动。
 - [x] `opencode mcp list` 显示测试服务已连接、开发入口已禁用。
+- [x] 2026-11-05 复核：开发入口实际位于用户级 `~/.workbuddy/mcp.json` 的 `videocraft-development`（SSH stdio，列于 `disabledMcpServers`）；项目 `opencode.json` / `.mcp.json` 只保留测试 HTTP 入口，未出现开发环境常驻服务。
 
 ### 任务三：最终核验
 

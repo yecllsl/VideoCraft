@@ -1,10 +1,12 @@
 # VideoCraft 剪辑工作目录实施计划
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+>
+> **进度同步：**本计划复选框未随实施更新；实际进度与当前环境状态以 `.scratch/videocraft-workflow/progress.md` 为准。
 
-**目标：**配置安全隔离的 NAS 存储映射、向远程 MCP 提供严格字幕生成，并在 Windows 工作目录建立可审批的首个样例剪辑流程。
+**目标：**配置安全隔离的 NAS 存储映射、向远程 MCP 提供严格字幕生成，并在客户端（Windows 侧）工作目录建立可审批的首个样例剪辑流程。
 
-**架构：**开发和测试环境分别挂载相同三类 SMB 共享，raw 只读、projects/output 可写但按环境分区；远程字幕工具复用现有严格对齐实现，先在开发验证再部署测试。Windows 侧使用工作流 skills 编排只读盘点、用户审批、字幕审阅和远程合成。
+**架构：**服务端开发和测试环境分别挂载相同三类 SMB 共享，raw 只读、projects/output 可写但按环境分区；远程字幕工具复用现有严格对齐实现，先在开发验证再部署测试。客户端（Windows 侧）工作目录使用工作流 skills 编排只读盘点、用户审批、字幕审阅和远程合成。
 
 **技术栈：**Linux CIFS 挂载与 VideoCraft 本地配置；Python 远程 MCP 和现有字幕核心；OpenCode MCP 工具；Markdown 工作流 skills；Windows SMB。
 
@@ -13,7 +15,7 @@
 ## 全局约束
 
 - 原始素材共享 `raw` 只读；远端原始媒体不复制到 Windows。
-- 开发环境 `/root/projects/videocraft/` 先实现、验证；测试环境 `/opt/videocraft/` 只在开发验证通过后部署。
+- 服务端开发环境 `/root/projects/videocraft/` 先实现、验证；服务端测试环境 `/opt/videocraft/` 只在开发验证通过后部署。
 - `projects` 与 `output` 下的开发、测试文件分别位于 `dev/`、`test/`；写入使用独立项目目录和唯一文件名，不覆盖已有文件。
 - 字幕以确认文案为准、以录音为时间轴；自动转写仅供参考，低置信对齐等待人工确认。
 - 不提交分镜合成，直到用户确认素材对应表；不自动配音、不默认添加配乐、不烧录首版字幕。
@@ -27,7 +29,7 @@
 - 更新各环境 `/.../assets` 软链：指向核实后的原始素材根，保持本地 CLI 与远程 URI 根语义一致。
 - 修改开发仓库中远程 MCP 工具注册/实现模块及对应 `tests/test_remote_tools.py`、必要的存储/协议测试：新增单段严格字幕工具。
 - 修改开发仓库的 `docs/`、`AGENTS.md`、`skills/`：登记远程工具契约及开发/测试部署说明，确保项目文档与行为一致。
-- 修改 Windows 工作目录 `AGENTS.md` 和新增 `.agents/skills/` 下的本地工作流 skills：定义审批闸门、MCP 工具路由、产物记录。
+- 修改客户端工作目录 `AGENTS.md` 和新增 `.agents/skills/` 下的本地工作流 skills：定义审批闸门、MCP 工具路由、产物记录。
 - 创建 `projects/宝马5系2/` 的轻量记录：素材对应表、逐段确认文案/字幕审阅记录、任务状态与输出引用；媒体仍在 NAS。
 
 ## 重点检查
@@ -73,7 +75,7 @@
 - [ ] 添加/修正测试三共享挂载和存储根配置；保留已运行 MCP/Worker 服务，不重启服务直到配置及挂载验证完成。
 - [ ] 更新测试 `assets` 软链并确认挂载依赖，raw 仍只读。
 - [ ] 验证 `findmnt`、selfcheck、SMB 双向可见性、raw 写入拒绝及在唯一临时路径上的 projects/test 与 output/test 写读；与任务 2 不同的 mount 来源或权限必须视为失败。
-- [ ] 确认当前服务加载配置的方式；仅在需要且经安全维护步骤批准时安排受控重启，重启后验证 MCP/Worker health 和六工具清单。
+- [ ] 确认当前服务加载配置的方式；仅在需要且经安全维护步骤批准时安排受控重启，重启后验证 MCP/Worker health 和工具清单（现为 7 个工具）。
 
 ### 任务 4：在开发环境向远程 MCP 暴露严格字幕
 
@@ -93,7 +95,7 @@
 
 **文件/环境：**仅在任务 4 全部通过后部署 `/opt/videocraft/` 对应代码与测试服务配置。
 
-**接口：**测试 MCP 新工具 schema 与开发一致；输出路径限定在 `projects/test/`；现有 6 工具保持可用。
+**接口：**测试 MCP 新工具 schema 与开发一致；输出路径限定在 `projects/test/`；原有 6 工具保持可用，新增 `strict_subtitles` 后工具面为 7 个。
 
 - [ ] 记录测试部署前代码版本、服务状态、工具清单及现有项目/输出目录基线。
 - [ ] 将经验证的变更部署到测试环境，不同步开发本地配置、密钥或 dev 产物。
