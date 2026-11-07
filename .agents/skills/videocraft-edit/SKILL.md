@@ -26,7 +26,7 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 
 只有 `<项目>`（项目名，也是 `nas://raw/` 下的目录名）由每次任务给出。
 
-工具面（7 个）：`videocraft_selfcheck`、`probe_media`、`extract_frames`、`strict_subtitles`、`submit_assemble`、`get_job_status`、`cancel_job`（部署 `strict_subtitles` 前为 6 个）。
+工具面（10 个）：`videocraft_selfcheck`、`probe_media`、`extract_frames`、`list_directory`、`storage_probe`、`transcribe_candidate`、`strict_subtitles`、`submit_assemble`、`get_job_status`、`cancel_job`。
 
 首次运行前置：客户端 OpenCode V2 打开的是解压后的项目根；`VIDEOCRAFT_MCP_TOKEN` 已设置且被进程继承；客户端可达 `192.168.88.4:8000` 与 `192.168.100.58`；服务端测试环境 MCP / Worker 在跑、三个存储根已挂载；项目根下已有 `projects/<项目>/` 与 `.scratch/videocraft-workflow/`。
 
@@ -36,10 +36,11 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 
 调用 `videocraft_selfcheck`，逐项确认；任一不满足即停止，并给出可执行的错误文案（区分未连内网 / 服务未启动 / 令牌无效 / NAS 未挂载）：
 
-- core ok、三个存储根 healthy、worker alive、NVENC ok。
-- `tools/list` 含上述 7 个工具；字幕写入命名空间为 `test`。
-- `raw` 写入被拒、`projects` / `output` 可写：用唯一临时路径做一次创建/读取/删除探针并清理，**不要动 raw 里的既有文件**。
-- 记录 `nas://output/test/<项目>/` 的既有文件基线，供第 6 步证明未覆盖。
+- core ok、三个存储根 healthy、worker alive；检查 `capabilities.nvenc.status`，只把 `ok` 视为 NVENC 可用，`unavailable` / `error` 按本次编码目标处理并如实记录。
+- `tools/list` 含上述 10 个工具；`videocraft_selfcheck.capabilities.subtitle_namespace` 必须为 `test`；`capabilities.asr.status` 必须为 `configured`（`unavailable` / `not_cached` 时停止，不要提交转写任务）。
+- 显式调用 `storage_probe`：要求 raw `write_denied=passed`，projects/output 的 create/read/delete/cleanup 均为 `passed`；否则停止。探针只使用服务端专用随机路径，确认无残留，不自行清理其他对象。
+- 用 `list_directory` 读取 `nas://raw/<项目>/` 素材清单及 `nas://output/test/<项目>/` 既有文件基线；遍历分页 cursor 至结束。该工具每页最多 25 项、每页最多探测 10 个媒体文件，总目录超过 1000 项会拒绝并要求改为列举子目录。URI / 权限错误时停止，不绕过 resolver。
+- MCP 连接失败按错误分类处理：401 检查 bearer 配置与环境变量；连接拒绝/超时检查内网与服务；selfcheck 根失败按返回 root/error_code 处理。不要在日志或命令行打印令牌。
 
 ## 2. 审批闸门（不可绕过）
 
@@ -52,6 +53,22 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 - 文案按原音校订，**不照抄 ASR 错词**；口播保留口语。产品名 / 专有名词等高风险词从本项目 ASR 候选稿逐段推导核对，不要沿用任何样例词表。
 - ASR 原文只放 `.scratch/videocraft-workflow/` 候选稿，避免与确认稿分叉。
 - 低置信对齐、告警或文案与录音明显不匹配时暂停并上报。
+
+### ASR 候选稿（仅草稿）
+
+逐段调用 `transcribe_candidate` 生成候选纯文本与带时间戳 SRT，作为校订文案的输入：
+
+```json
+{"video_uri":"nas://raw/<项目>/话术/<clip>.MP4",
+ "text_output_uri":"nas://projects/test/<项目>/asr/<段>-v<N>.txt",
+ "srt_output_uri":"nas://projects/test/<项目>/asr/<段>-v<N>.srt"}
+```
+
+- 输入必须在 `nas://raw/`；两个输出必须在同一 `nas://projects/test/<项目>/` 目录，后缀分别为 `.txt` / `.srt`；否则返回 `INVALID_URI`。
+- 返回 `job_id` / `state=queued` / `candidate=true`；用 `get_job_status` 轮询到终态。成功后 `job.result` 含 `text_uri`、`srt_uri`、`model`、`language`、`segments`、`duration`、`seconds`。
+- 已存在目标返回 `OUTPUT_EXISTS`，**不覆盖**；用唯一 `-v<N>` 命名。取消用 `cancel_job`，queued 任务会原子取消且不产生产物。
+- 候选结果**不确认对应表、不触发 `strict_subtitles` 或 `submit_assemble`**；文案仍按原音校订，ASR 错词不得直接沿用。
+- 失败终态为 `failed` + `error_code=TRANSCRIBE_FAILED`（模型缺失、素材损坏、无语音等），此时不应有 `.txt` / `.srt` 产物；先查目标文件再重试。
 
 ## 3. 旁挂字幕
 
@@ -79,7 +96,7 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 ffmpeg -y -i "<空镜>.MP4" -vf "fps=2.5,scale=480:-2,tile=4x4" -frames:v 1 <sheet>.jpg
 ```
 
-看曝光、镜头运动、有无内部切换；不要凭单帧中点推定区间。可用 `astats` / `silencedetect` 核对环境声电平。高分辨率 HEVC 上 `extract_frames` 可能返回 `PREVIEW_TOO_LARGE`，此时改用服务端 CLI 抽帧，**不要据此推断画面内容**。本会话不能真正听音时，必须在交付记录里写明这一限制，不得宣称已核听。
+看曝光、镜头运动、有无内部切换；不要凭单帧中点推定区间。可用 `astats` / `silencedetect` 核对环境声电平。高分辨率 HEVC 上 `extract_frames` 可能返回 `PREVIEW_TOO_LARGE`，或客户端报 SSE 事件超过 1 MiB（服务端测试环境 `[preview]` 为 1 MiB/帧、6 MiB/总，验收客户端已放宽到 8 MiB，但普通客户端未必）；此时改用服务端 CLI 抽帧 / 联系表，**不要据此推断画面内容**。本会话不能真正听音时，必须在交付记录里写明这一限制，不得宣称已核听。
 
 ## 5. 合成
 
@@ -118,7 +135,7 @@ ffmpeg -hide_banner -nostats -i "<成片>.mp4" -af "silencedetect=noise=-35dB:d=
 | skill 没出现在 `<available_skills>` | 确认路径是项目内 `.agents/skills/videocraft-edit/SKILL.md`、文件名全大写、frontmatter 有 `name` / `description`，且 `permission.skill` 未设 `deny` |
 | 令牌出现在日志 / 命令行 | 真实事故：扩展把整个 `process.env` 明文写日志。令牌不写进 `opencode.json`、命令行或日志；疑似泄露立即要求管理员轮换 |
 | `TOOL_TIMEOUT` | CPU 冷加载 >60s；服务端超时设 180；超时后仍可能发布 SRT，先查目标再重试 |
-| `PREVIEW_TOO_LARGE` | 高分辨率 HEVC 抽帧超限；改服务端 ffmpeg 联系表，不据此推断画面 |
+| `PREVIEW_TOO_LARGE` / SSE 事件超限 | 高分辨率抽帧超过服务端帧预算或客户端 SSE 事件上限；改用服务端 ffmpeg 联系表，不据此推断画面 |
 | `INVALID_URI` / `OUTPUT_EXISTS` | 命名空间 / 后缀守卫与独占创建；换合法唯一路径，不覆盖、不绕开 |
 | 客户端打不开 NAS | 未接入该 LAN 或 VPN；改由服务端测试环境核验，并在交付记录写明限制 |
 
