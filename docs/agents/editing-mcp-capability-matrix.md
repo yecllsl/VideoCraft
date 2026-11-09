@@ -24,4 +24,25 @@ Scope: the approved NAS editing workflow, not parity between local stdio and rem
 
 Remote tool inventory deployed to the test environment: `videocraft_selfcheck`, `probe_media`, `extract_frames`, `list_directory`, `storage_probe`, `strict_subtitles`, `transcribe_candidate`, `submit_assemble`, `get_job_status`, `cancel_job`. Required differences are tracked by workflow stage above, not by local tool equivalence. The test HTTP service was verified live on 2026-11-07 with selfcheck, tools/list, preflight checks, ASR transcription, collision, and cancellation.
 
+Contract increment deployed 2026-11-09 (development suite 408 PASS, live `accept-remote` 12/12 PASS): `transcribe_candidate` now returns `words` (word / start / end / probability) and `last_word_end` in `job.result`; its input schema and the 10-tool inventory are unchanged, and no third artifact is published. `submit_assemble` shots accept optional `audio_start` (default 0) so audio and video share a source in-point, enabling multiple clips from one take; the shot render fingerprint includes this field. Word-level data lives only in job results and is lost if jobs are purged.
+
 Acceptance rule: all remote-required entries must have tested contracts and live test-environment evidence before a workflow is considered ready. Acceptance requires `capabilities.asr.status == "configured"` and fails closed before write actions otherwise. A candidate ASR result never confirms mapping text and never authorizes subtitle publication or assembly.
+
+## 工具契约速查（单一事实源）
+
+两个流程 skill 都引用本节，不在各自文档里复制参数表；工具契约变更只改这里。
+
+| 工具 | 入参 | 返回 / 产物 | 关键约束与错误码 |
+|---|---|---|---|
+| `videocraft_selfcheck` | 无 | `ok`、`core_ok`、`roots`、`worker`、`capabilities`（`nvenc` / `tools` / `subtitle_namespace` / `asr`） | 预检要求 `ok`、`core_ok`、三根 healthy、worker alive、`asr.status=configured`、`subtitle_namespace=test` |
+| `probe_media` | `uri` | `media`（`duration`、`size_bytes`、`streams`、`uri`） | 只读；时长用于算尾部空白 |
+| `extract_frames` | `uri`、`n` | 帧预览 | `PREVIEW_TOO_LARGE`（测试环境 1 MiB/帧、6 MiB/总）；普通客户端 SSE 事件上限可能不足 |
+| `list_directory` | `uri`、`limit=25`、`cursor` | 目录项 + 分页 cursor | **URI 不能以 `/` 结尾**（`INVALID_URI: empty/dot/dotdot path segment`）；非 `raw` 根至少要有 `namespace/<项目>` 两级，只到 `nas://output/test` 会返回 `INVALID_URI: directory must be within an allowed project`；output 项目目录不存在时返回空 `entries`；每页最多 25 项、最多探测 10 个媒体；总目录 >1000 项拒绝 |
+| `storage_probe` | 无 | raw `write_denied`、projects/output 的 create/read/delete/cleanup | 预检必须全 passed |
+| `transcribe_candidate` | `video_uri`、`text_output_uri`、`srt_output_uri` | `job_id` / `state=queued` / `candidate=true`；成功后 `job.result` 含 `text_uri`、`srt_uri`、`model`、`language`、`segments`、`duration`、`seconds`、`words`（词 / start / end / probability）、`last_word_end` | 输入须 `nas://raw/`；两个输出须同目录、同属当前 namespace、后缀 `.txt` / `.srt`；`OUTPUT_EXISTS` 不覆盖；`TRANSCRIBE_FAILED`；结果仅候选，不授权字幕或合成。词级数据只在 `job.result`，任务记录被清理即丢失，不落第三个文件 |
+| `strict_subtitles` | `video_uri`、`text`、`output_uri` | `cues`、`warnings`、`needs_review` | 目标须 `nas://projects/test/` 下 `.srt`；本次智能剪辑范围外（后续） |
+| `submit_assemble` | `storyboard`（dict）、`output_uri`、`overwrite=false` | `job_id` / `state=queued` | 顶层 `title` / `size`（固定 `[1920,1080]`）/ `fps`（1–60，成片用 60）/ `shots`；shot 允许 `video`、`image`、`card`、`text`、`subtitle`、`audio`、`start`、`duration`、`audio_start`、`section`。`start` 是画面入点，`audio_start`（默认 0）是音频入点，**同源取段时两者填同值**，`duration` 为该镜头成片时长；`output_uri` 必须 `.mp4`；`OUTPUT_EXISTS` / `INVALID_STORYBOARD` / `TOO_MANY_SHOTS` / `STORYBOARD_TOO_LARGE` |
+| `get_job_status` | `job_id` | `job`（`state`、`stage`、`result`、`error_code`、`error_detail`…） | 终态 `succeeded` / `failed` / `cancelled`；合成须 `state=succeeded` 且 `stage=publishing` |
+| `cancel_job` | `job_id` | `ok` / `state` / `accepted` | queued 任务原子取消且不产生产物 |
+
+连接：`http://192.168.88.4:8000/mcp`，`oauth: false` + 静态 Bearer（令牌只在环境变量中，不进文件、命令行、日志）。命名空间 `test`。客户端经 SMB 顺畅访问 NAS 音视频，不安装任何操作系统自带工具以外的工具。
