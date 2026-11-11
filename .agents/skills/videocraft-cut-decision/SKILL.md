@@ -13,8 +13,8 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 
 - 用户侧：经 SMB 看视频、听语音。**agent 能读的是数据，不是声音**；不能真正听音时必须如实写明。口误裁决与校订结果在中间态片子由用户一次确认，不要求逐条判断。
 - 每段话术：`transcribe_candidate` 的 `job.result.words`（词 / start / end / probability）与 `last_word_end`；`probe_media` 的媒体总时长。
-- 空镜：`probe_media` 时长；入出点由用户看片确认，agent 未目检时不得虚构。列出每段空镜的 **SMB 完整路径 + 时长**，请用户按 `文件名: in–out` 回填；静态图片无法确定对应素材和入出点，必须索取「文件名 + 时间码」。需要联系表时用服务端受控 CLI 生成带时间码的抽帧。
-- 帧预览：`extract_frames` 只是可选辅助，且受契约速查中的预览预算限制。拿不到帧时改用 SMB 看片或服务端 CLI，**不得据此推断画面，也不得把流程停在这里**。
+- 空镜：`probe_media` 时长；入出点由用户看片确认，agent 未目检时不得虚构。列出每段空镜的 **SMB 完整路径 + 时长**，请用户按 `文件名: in–out` 回填；静态图片无法确定对应素材和入出点，必须索取「文件名 + 时间码」。需要联系表时用 `extract_frames` 取帧或经 SMB 看片记录时间码，不依赖服务端 CLI 或 SSH。
+- 帧预览：`extract_frames` 只是可选辅助，且受契约速查中的预览预算限制。拿不到帧时改用 SMB 看片，**不得据此推断画面，也不得把流程停在这里**。
 
 ## 四类删除原因
 
