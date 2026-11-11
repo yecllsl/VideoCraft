@@ -101,7 +101,7 @@ SDK 已自带组件（`mcp/server/auth/handlers/`：`authorize.py` / `token.py` 
 ### 2.4 Skill 设计
 
 - Skill 只描述可独立触发的分支，避免无关上下文加载。
-- 审批闸门必须写进 Skill：素材对应表未获用户确认 → **不得调用 `submit_assemble`**。
+- 审批闸门必须写进 Skill：删除清单未由用户置为「已确认」 → **不得调用 `submit_assemble`**；带校订字幕的中间态另需用户一次确认。
 - 字幕/画面不匹配、告警时暂停并上报，不得把不可靠结果当合格结果。
 
 ---

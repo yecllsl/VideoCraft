@@ -14,12 +14,16 @@
 - 服务端两环境共用三处 NAS 挂载（raw 只读，projects/output 可写，由 systemd automount 按需挂载）；写边界由 `[storage].namespace` 的 `dev` / `test` 区分。
 - 核查与对齐记录见 `.scratch/videocraft-workflow/progress.md` 的「2026-11-05 开发环境现状核查」及后一节。
 - 2026-11-07：ASR 候选转写（`transcribe_candidate`）已实现、开发环境真实推理通过，并部署到测试环境完成 live 验收（12/12 preflight + 转写/冲突/取消）。两个 checkout 仍含未提交改动；测试环境 `videocraft.local.toml` 的 `[preview]` 调整为 1 MiB/帧、6 MiB/总。详见 `.scratch/videocraft-workflow/progress.md` 的「2026-11-07 ASR 候选转写部署与验收」。
+- 2026-11-09：智能剪辑契约增量已部署并 live 验收——`transcribe_candidate` 的 `job.result` 含 `words` / `last_word_end`，`submit_assemble` 的 shot 支持 `audio_start`（同源取段时与 `start` 同值）。详见 `.scratch/videocraft-smart-cut/progress.md` 与 `docs/agents/editing-mcp-capability-matrix.md`；任何写操作前先核实两个 checkout 当前状态。
 
 ## Agent skills
 
-### 视频剪辑全流程
+### 智能剪辑流程
 
-素材盘点、旁挂字幕、远程合成与校验使用 `.agents/skills/videocraft-edit/SKILL.md`（`/videocraft-edit`）。
+- 判读与删除清单（ASR 候选、空镜入出点、字幕校订表）：`.agents/skills/videocraft-cut-decision/SKILL.md`（`/videocraft-cut-decision`）。
+- 连接、预检、编排提交、验收、记录清理：`.agents/skills/videocraft-edit/SKILL.md`（`/videocraft-edit`）。
+- 工具契约唯一事实源：`docs/agents/editing-mcp-capability-matrix.md`（参数、URI 约束、错误码只在此维护，两个 skill 都引用它）。
+- 开新项目：先确定唯一项目名，按契约模板提交首段 `transcribe_candidate` 作为预检验收点；项目目录由服务端发布逻辑自动创建，不需要也不存在「创建项目目录」的 MCP 接口。
 
 ### 工作项跟踪
 
