@@ -1,5 +1,5 @@
 # 本机中间预览与媒体文件（约定：媒体与产物都在 NAS，本地只留轻量记录）
-**/review/
+/review/
 *.mp4
 *.mov
 *.mkv
@@ -8,14 +8,23 @@
 *.png
 *.wav
 *.mp3
+# 字幕：经 SMB 校对时可能落到本地，属客户内容
+*.srt
+*.ass
+*.vtt
 
 # 可重建的发布打包产物
 *.zip
+
+# OpenCode 插件一期构建产物
+/plugin/**/node_modules/
+/plugin/**/dist/
 
 # 工具本地状态：截图、会话记忆、IDE 配置
 /.screenshots/
 /.workbuddy/
 /.trae/
+/.superpowers/
 
 # 凭据与日志（令牌只从环境变量读取；曾发生日志明文泄露令牌的事故）
 .env
