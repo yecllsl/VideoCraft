@@ -1,0 +1,4 @@
+# 基线哈希按原始字节锁定；固定 LF，避免 core.autocrlf=true 在 checkout 时改写字节。
+*.md text eol=lf
+*.tpl text eol=lf
+*.js text eol=lf
