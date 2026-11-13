@@ -15,6 +15,7 @@
 - 核查与对齐记录见 `.scratch/videocraft-workflow/progress.md` 的「2026-11-05 开发环境现状核查」及后一节。
 - 2026-11-07：ASR 候选转写（`transcribe_candidate`）已实现、开发环境真实推理通过，并部署到测试环境完成 live 验收（12/12 preflight + 转写/冲突/取消）。两个 checkout 仍含未提交改动；测试环境 `videocraft.local.toml` 的 `[preview]` 调整为 1 MiB/帧、6 MiB/总。详见 `.scratch/videocraft-workflow/progress.md` 的「2026-11-07 ASR 候选转写部署与验收」。
 - 2026-11-09：智能剪辑契约增量已部署并 live 验收——`transcribe_candidate` 的 `job.result` 含 `words` / `last_word_end`，`submit_assemble` 的 shot 支持 `audio_start`（同源取段时与 `start` 同值）。详见 `.scratch/videocraft-smart-cut/progress.md` 与 `docs/agents/editing-mcp-capability-matrix.md`；任何写操作前先核实两个 checkout 当前状态。
+- 2026-11-12 核查：`burn_subtitles`（第 11 个远程工具）两端均已提交且工作区干净——开发 `11ece3d`（已与 `origin/main` 同步）、测试 `2288bca`（无 remote）；两端这 7 个改动文件内容逐字节一致，HEAD 不同是既有历史分叉，不强行对齐。测试环境常驻服务未重启。认证架构定案见 `docs/adr/0001-auth-architecture.md`。
 
 ## Agent skills
 
@@ -25,18 +26,18 @@
 - 工具契约唯一事实源：`docs/agents/editing-mcp-capability-matrix.md`（参数、URI 约束、错误码只在此维护，两个 skill 都引用它）。
 - 开新项目：先确定唯一项目名，按契约模板提交首段 `transcribe_candidate` 作为预检验收点；项目目录由服务端发布逻辑自动创建，不需要也不存在「创建项目目录」的 MCP 接口。
 
-### 工作项跟踪
+### 工作项跟踪 / Issue tracker
 
-工作项使用 `.scratch/` 下的本地 Markdown 文件管理。约定见 `docs/agents/issue-tracker.md`。
+工作项使用 `.scratch/` 下的本地 Markdown 文件管理，不进 Git；GitHub 远程只是代码/文档的分发渠道，不是 tracker，外部 PR 也不是 triage 请求面。技能说「publish / fetch 工单」时按 `docs/agents/issue-tracker.md` 的本地语义执行。
 
-### 分类标签
+### 分类标签 / Triage labels
 
-使用 `needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human` 和 `wontfix`。说明见 `docs/agents/triage-labels.md`。
+使用 `needs-triage`、`needs-info`、`ready-for-agent`、`ready-for-human` 和 `wontfix`（五个状态角色，字符串即默认值）。「apply label」在本地 Markdown 下指改写工作项的 `- **标签：**` 行或 `progress.md` 列表项，不调用 `gh`。说明见 `docs/agents/triage-labels.md`。
 
-### 领域文档
+### 领域文档 / Domain docs
 
-本目录采用单一领域上下文，使用根目录 `GLOSSARY.md` 和 `docs/adr/`。约定见 `docs/agents/domain.md`。
+单一领域上下文：术语表是根目录 `GLOSSARY.md`（等价 `CONTEXT.md`），历史决定在 `docs/adr/`；没有 `CONTEXT-MAP.md` 的多上下文结构。约定见 `docs/agents/domain.md`。
 
 ### 插件分发
 
-面向其他 WorkBuddy 用户的发布要求见 `docs/agents/plugin-distribution.md`。当前实现为单机定制，发布前须先完成该清单第 1 节的服务端 OAuth 授权服务器，否则规范客户端一律无法完成授权。
+面向其他 WorkBuddy 用户的发布要求见 `docs/agents/plugin-distribution.md`，适用范围由 `docs/adr/0001-auth-architecture.md` 定案：面向不支持 `oauth: false` 的规范客户端 / 多用户发布，须先完成该清单第 1 节的服务端 OAuth 授权服务器，否则一律无法完成授权；OpenCode V2 插件一期走静态 Bearer 直连，不以此为前置。

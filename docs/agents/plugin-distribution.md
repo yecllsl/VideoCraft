@@ -2,6 +2,7 @@
 
 > 面向"把 VideoCraft 能力发布给其他 WorkBuddy 用户"的工程约定。
 > 当前实现是**单机单用户定制**，直接发给别的用户会大面积失败。本清单是发布前的准入条件。
+> **适用范围（2026-11-12，ADR-0001 定案）**：本清单是「面向不支持 `oauth: false` 的规范客户端 / 多用户」发布的准入条件，第 1 节 OAuth AS 的硬前置只对这一范围成立。OpenCode V2 插件一期走静态 Bearer 直连，按 `docs/adr/0001-auth-architecture.md` 与 `GLOSSARY.md` 的「验收边界」执行，不把服务端 OAuth AS 作为一期前置。
 
 ## 0. 现状定性：哪些是服务端的固有约束，哪些是我的定制
 
@@ -39,7 +40,7 @@
 
 ---
 
-## 1. 服务端工作（硬性前置）
+## 1. 服务端工作（多用户 / 规范客户端发布的硬性前置）
 
 ### 1.1 实现真正的 OAuth 2.1 授权服务器（推荐路径）
 
@@ -58,7 +59,7 @@ SDK 已自带组件（`mcp/server/auth/handlers/`：`authorize.py` / `token.py` 
 
 **验收标准**
 
-- WorkBuddy 桌面版用**标准 HTTP 连接器**（`type: http` + `headers`）完成 OAuth 后连上并列出当前 7 个工具。
+- WorkBuddy 桌面版用**标准 HTTP 连接器**（`type: http` + `headers`）完成 OAuth 后连上并列出当前 11 个工具（清单以 `docs/agents/editing-mcp-capability-matrix.md` 为准）。
 - 官方 MCP SDK 客户端 `streamable_http_client` 在**不注入自定义头**的情况下能完成 OAuth 并连接。
 - 现有 OpenCode 路径（`oauth:false` + 静态 Bearer）不回归。
 - 无凭据请求仍返回 401 + 正确的 `WWW-Authenticate`，但元数据指向可达的 AS。
@@ -122,7 +123,7 @@ SDK 已自带组件（`mcp/server/auth/handlers/`：`authorize.py` / `token.py` 
 
 ## 5. 建议落地顺序
 
-1. **服务端补 OAuth AS**（第 1 节）——不做这步，后续所有客户端适配都是打补丁。
+1. **服务端补 OAuth AS**（第 1 节）——对「多用户 / 规范客户端」发布不做这步，后续客户端适配都是打补丁；OpenCode V2 一期按 ADR-0001 不纳入本顺序。
 2. 撤下本地桥接，改用标准 HTTP 连接器 + OAuth。
 3. 参数化配置与跨平台化（第 2 节）。
 4. 令牌签发/轮换/吊销（第 1.3 节）。
