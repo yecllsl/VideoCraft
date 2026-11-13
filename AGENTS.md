@@ -17,6 +17,10 @@
 - 2026-11-09：智能剪辑契约增量已部署并 live 验收——`transcribe_candidate` 的 `job.result` 含 `words` / `last_word_end`，`submit_assemble` 的 shot 支持 `audio_start`（同源取段时与 `start` 同值）。详见 `.scratch/videocraft-smart-cut/progress.md` 与 `docs/agents/editing-mcp-capability-matrix.md`；任何写操作前先核实两个 checkout 当前状态。
 - 2026-11-12 核查：`burn_subtitles`（第 11 个远程工具）两端均已提交且工作区干净——开发 `11ece3d`（已与 `origin/main` 同步）、测试 `2288bca`（无 remote）；两端这 7 个改动文件内容逐字节一致，HEAD 不同是既有历史分叉，不强行对齐。测试环境常驻服务未重启。认证架构定案见 `docs/adr/0001-auth-architecture.md`。
 
+## 开发流程
+
+双方法论（Matt 规划 / Superpowers 执行）的三阶段、交接映射表与阶段间禁止事项见 `docs/agents/development-workflow.md`。
+
 ## Agent skills
 
 ### 智能剪辑流程
