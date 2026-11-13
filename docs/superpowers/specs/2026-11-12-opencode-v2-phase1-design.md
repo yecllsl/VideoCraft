@@ -20,7 +20,7 @@
 
 ## 架构
 
-插件落在 `plugin/videocraft/`，零依赖 shim，不引入运行时安装步骤。三个 transform 钩子沿用原型已验证的形态：配置注入、`options`、**查阅别名**（`ctx.reference.transform`，必须带 `description`，按需 attach、不进 MCP 预检）。钩子的确切 API 名不在本设计固化，由实施计划首任务的加载自检锁定；探针结果与假设不符时按 `executing-plans` 的 STOP 规则停下上报，不猜。
+插件落在 `plugin/videocraft/`，零依赖 shim，不引入运行时安装步骤。三个 transform 钩子为 **插件钩子映射** 所定义的 `ctx.mcp.transform`（配置注入）、`ctx.skill.transform`（两个 skill）、`ctx.reference.transform`（**查阅别名**，必须带 `description`，按需 attach、不进 MCP 预检）；该映射由 2026-11-13 对 OpenCode v2.2.7 的运行时探针实证，替代原型笔记中「配置注入 / `options` / 查阅别名」的假设。唯一事实源是 `GLOSSARY.md` 的该词条，探针过程记在本机台账。
 
 ## 组件
 

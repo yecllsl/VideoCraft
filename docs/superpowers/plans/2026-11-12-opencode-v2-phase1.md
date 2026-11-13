@@ -14,7 +14,7 @@
 
 - 所有 `git commit` 步骤执行前需用户明确批准。
 - 不建 worktree：客户端仓库无代码，隔离靠**验收边界**的临时目录与服务端 dev/test 命名空间。
-- `ponytail:` 三个 transform 的确切钩子名未实证，Task 5 用运行时探针对照；输出与 `ctx.reference.transform` 假设不符即按 `executing-plans` 的 STOP 规则停下上报。升级路径：把探针结论记进 `progress.md` 后再写适配器，不在本计划里猜 API。
+- 实施结论（2026-11-13）：三个 transform 已由 OpenCode v2.2.7 运行时探针实证，映射见 `GLOSSARY.md` 的 **插件钩子映射**（`ctx.mcp.transform` / `ctx.skill.transform` / `ctx.reference.transform`）。下文 Task 5 探针草稿里的 `config` / `options` 是实施前假设，已作废；勿照抄，以 `plugin/videocraft/index.js` 与 `GLOSSARY.md` 为准。
 
 ### Task 1: 清理悬空引用
 
@@ -255,6 +255,8 @@ git commit -m "feat(plugin): ship verbatim contract copy with byte comparison"
 - Create: `plugin/videocraft/index.js`
 - Create: `plugin/videocraft/checks/load.test.js`
 
+> 实施前草稿，已由 2026-11-13 实证结果取代：插件定义是 `export default { id, setup }`，三个钩子为 `ctx.mcp.transform` / `ctx.skill.transform` / `ctx.reference.transform`（见 `GLOSSARY.md` 的 **插件钩子映射**）。以下 `config` / `options` 写法勿照抄。
+
 **Step 1: 写探针（throwaway，答案记入 `progress.md` 后删除）**
 
 ```js
@@ -262,8 +264,8 @@ git commit -m "feat(plugin): ship verbatim contract copy with byte comparison"
 module.exports = function probe(ctx) {
   console.log(JSON.stringify({
     ctxKeys: Object.keys(ctx || {}),
-    config: typeof ctx?.config?.transform,
-    options: typeof ctx?.options?.transform,
+    mcp: typeof ctx?.mcp?.transform,
+    skill: typeof ctx?.skill?.transform,
     reference: typeof ctx?.reference?.transform,
   }));
 };
@@ -272,11 +274,11 @@ module.exports = function probe(ctx) {
 **Step 2: 在隔离临时目录用真实 OpenCode 加载探针，记录三个 transform 的实际挂载点**
 
 Run: 由执行者按本机 OpenCode 的插件加载方式运行，输出写入 `.scratch/videocraft-plugin-distribution/progress.md` 的「插件钩子探针」段。
-Expected: `reference` 为 `function`；另两项为 `function`。若不是 → **STOP**，上报后按探针结论改写 Task 5 剩余步骤，不改断言迁就实现。
+Expected: 三项均为 `function`。若不是 → **STOP**，上报后按探针结论改写 Task 5 剩余步骤，不改断言迁就实现。
 
 **Step 3: 按探针结论写 `index.js`**
 
-零依赖 shim：导出一个注册函数，用探针确认的挂载点注册配置注入（调用 `renderConfig`）、`options`、**查阅别名** `videocraft-contract`（`ctx.reference.transform`，带 `description`，指向 `plugin/videocraft/docs/editing-mcp-capability-matrix.md`）。不写死未实证的其它钩子名。
+零依赖 shim：默认导出 `{ id, setup }` 定义对象，在 `setup(ctx)` 中注册配置注入（`ctx.mcp.transform` 调用 `draft.set`）、两个 skill（`ctx.skill.transform` 调用 `draft.add`）、**查阅别名** `videocraft-contract`（`ctx.reference.transform` 调用两参数 `draft.add(别名, source)`，带 `description`，指向 `plugin/videocraft/docs/editing-mcp-capability-matrix.md`）。全部可失败工作预计算完成后再注册。
 
 **Step 4: 写加载自检并跑绿**
 

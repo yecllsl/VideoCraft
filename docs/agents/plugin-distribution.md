@@ -84,6 +84,7 @@ SDK 已自带组件（`mcp/server/auth/handlers/`：`authorize.py` / `token.py` 
 ### 2.1 配置生成与分发
 
 - 插件安装时生成用户级 MCP 配置，**不覆盖用户已有条目**（追加语义）。
+- 插件经 `ctx.mcp.transform` 注入的 server 名（`videocraft-remote`）与作者本机 `opencode.json` 同名：启用插件前须删除本机同名条目，否则双重注册会相互覆盖。
 - 地址、挂载根、工作目录等一律参数化，集中在 settings。
 - 首次运行向导：选择环境（测试 / 开发）、填 MCP 地址、录令牌、连通性自检。
 - 自检失败要给出可执行的错误文案（未连内网 / 服务未启动 / 令牌无效 / 未挂载 NAS），不要只显示"未连接"。
