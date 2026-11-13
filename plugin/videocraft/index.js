@@ -9,6 +9,9 @@ const require = createRequire(import.meta.url);
 const { renderTemplate, renderConfig } = require("./render-config.js");
 const here = path.dirname(fileURLToPath(import.meta.url));
 
+// 钩子映射经 OpenCode v2.2.7 运行时实证：ctx.mcp.transform / ctx.skill.transform / ctx.reference.transform。
+// draft 形状：mcp.set(name, config)、skill.add(info)、reference.add(alias, source)。
+// 设计中的 `config` / `options` 命名是上一轮误记，见台账 2026-11-13 段。
 const SKILLS = [
   { id: "videocraft-edit", file: "videocraft-edit.SKILL.md.tpl" },
   { id: "videocraft-cut-decision", file: "videocraft-cut-decision.SKILL.md.tpl" },

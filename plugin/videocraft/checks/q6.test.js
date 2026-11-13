@@ -40,5 +40,10 @@ assert.throws(
   /invalid \{\{SERVER_URL\}\}/,
   "非法地址必须给出可行动的错误"
 );
+assert.throws(
+  () => renderConfig({ ...values, "{{SERVER_URL}}": "http://192.0.2.1:8000/mcp" }),
+  /invalid \{\{SERVER_URL\}\}/,
+  "带路径的地址必须 fail-fast，避免拼出 /mcp/mcp"
+);
 
 console.log("q6: ok");

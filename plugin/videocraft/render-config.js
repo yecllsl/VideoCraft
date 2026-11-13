@@ -16,16 +16,19 @@ function renderTemplate(text, values) {
 }
 
 function mcpUrl(origin) {
-  let url;
+  let base;
   try {
-    url = new URL("mcp", origin.endsWith("/") ? origin : `${origin}/`);
+    base = new URL(origin);
   } catch {
     throw new Error(`invalid {{SERVER_URL}}: ${origin}`);
   }
-  if (url.protocol !== "http:" && url.protocol !== "https:") {
-    throw new Error(`invalid {{SERVER_URL}} protocol: ${url.protocol}`);
+  if (base.protocol !== "http:" && base.protocol !== "https:") {
+    throw new Error(`invalid {{SERVER_URL}} protocol: ${base.protocol}`);
   }
-  return url;
+  if (base.pathname !== "/" || base.search || base.hash) {
+    throw new Error(`invalid {{SERVER_URL}}: 只接受 origin（如 http://host:port），不要带路径或查询`);
+  }
+  return new URL("mcp", base);
 }
 
 function renderConfig(values) {

@@ -10,6 +10,12 @@ const ROOT = path.join(__dirname, "..", "..", "..");
 const PLUGIN = path.join(ROOT, "plugin/videocraft");
 const TEMPLATES = path.join(PLUGIN, "templates");
 
+const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
+assert.ok(
+  nodeMajor > 22 || (nodeMajor === 22 && nodeMinor >= 7),
+  `Node ${process.versions.node} 缺少无 package.json 的 ESM 语法探测，需 Node >= 22.7`
+);
+
 // 退出码约定：0 只表示「本地检查通过」，不代表允许插件发布；发布另需 live tools/list 复核。
 const CHECKS = [
   ["q6.test.js", "q6: ok"],
@@ -47,7 +53,12 @@ try {
   assert.ok(!/\{env:/i.test(packaged), "随包模板渲染后不得含 {env:...} 占位符");
 
   const converged = JSON.parse(packaged);
-  converged.mcp.servers["videocraft-remote"] = renderConfig(values).mcp["videocraft-remote"];
+  const packagedEntry = converged.mcp.servers["videocraft-remote"];
+  const runtime = renderConfig(values).mcp["videocraft-remote"];
+  assert.equal(packagedEntry.type, runtime.type, "随包模板与运行时注入的 type 必须一致");
+  assert.equal(packagedEntry.url, runtime.url, "随包模板与运行时注入的 url 必须一致");
+  assert.equal(packagedEntry.oauth, runtime.oauth, "随包模板与运行时注入的 oauth 必须一致");
+  converged.mcp.servers["videocraft-remote"] = { ...packagedEntry, headers: runtime.headers };
   const file = path.join(tmp, "opencode.json");
   fs.writeFileSync(file, JSON.stringify(converged, null, 2));
 
