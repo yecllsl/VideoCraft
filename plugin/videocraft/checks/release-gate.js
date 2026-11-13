@@ -68,4 +68,4 @@ try {
 }
 
 console.log("release-gate: local checks passed (exit 0 = local only; release NOT approved)");
-console.log("plugin-release: BLOCKED — live tools/list 未复核；不得据此发布");
+console.log("plugin-release: requires separate live tools/list verification (this script cannot approve release)");
