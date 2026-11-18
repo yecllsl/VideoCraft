@@ -26,6 +26,15 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 
 > `oauth: false` 是直连静态 Bearer 的关键，**不要删**；删掉后 OpenCode 会进入 OAuth，而测试环境没有授权服务器，必然卡在 401。
 
+无 IDE MCP 面板时用 PowerShell 静态 Bearer 直连 HTTP：先 `initialize` 并取响应头 `mcp-session-id`，再发无 id 的 `notifications/initialized`，之后 `tools/call` 带 `Mcp-Session-Id`；SSE 响应取 `data:` 行解析。骨架（`TOKEN` 只从环境读，不进文件/命令行）：
+
+```powershell
+$u='{{SERVER_URL}}/mcp'; $h=@{Authorization="Bearer $env:{{TOKEN_ENV}}";'Content-Type'='application/json';Accept='application/json, text/event-stream'}
+$r=Invoke-WebRequest $u -Method Post -Headers $h -Body '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"vc","version":"1"}}}' -UseBasicParsing
+$h['Mcp-Session-Id']=([string]$r.Headers['mcp-session-id']).Trim(); $null=Invoke-WebRequest $u -Method Post -Headers $h -Body '{"jsonrpc":"2.0","method":"notifications/initialized"}' -UseBasicParsing
+$j='{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"videocraft_selfcheck","arguments":{}}}'; $x=Invoke-WebRequest $u -Method Post -Headers $h -Body $j -UseBasicParsing; (($x.Content -split "`n"|?{$_ -like 'data:*'})[0].Substring(5)|ConvertFrom-Json).result.content[0].text
+```
+
 ## 1. 预检（干净客户端先跑这一段）
 
 **首次接入或换了客户端环境**：确认令牌已由进程继承、`oauth: false` 仍在、`<available_skills>` 同时列出两个流程 skill、契约文档 `docs/agents/editing-mcp-capability-matrix.md` 存在；IDE 内置 MCP 面板显示「需要认证」时改用 `oauth: false` 的直连客户端（或 PowerShell 静态 Bearer 直连），不要据此判定服务不可用。再确认三处 SMB 共享可读可写（raw 只读）。
@@ -76,6 +85,8 @@ OpenCode 按 `description` 把本 skill 列入 `<available_skills>`，由 agent 
 ## 5. 记录与清理
 
 回填删除清单的实际执行结果、成片路径 / 大小 / 时长、任务 ID、方案偏差与待定项；更新 `.scratch/` 进度台账。清理中间预览与临时产物，保留审批记录、候选稿与判读证据。
+
+验收产生的临时目录用服务端受控 `rm` 清理（运维动作，不属于剪辑步骤；剪辑仍只经 MCP）。客户端 SMB 对 UNC 路径的删除若被安全删除守卫拒绝，保留产物并在台账记路径，不重试等价删除。
 
 ## 常见故障
 

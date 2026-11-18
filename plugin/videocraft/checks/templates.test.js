@@ -17,7 +17,7 @@ const ORIGINAL = {
 // 它同时在 CRLF checkout 上会失败（下面的 LF 断言给出可行动报错）。升级路径：只哈希
 // 「审批闸门 / 红线 / 闸门」段落，并在仓库加 `.gitattributes` 固定 `*.md text eol=lf`。
 const BASELINE = {
-  ".agents/skills/videocraft-edit/SKILL.md": "7a46686bc3185b4a9caedf68b73c1a49561fd5547fd43ce29e6640c8f63c0d47",
+  ".agents/skills/videocraft-edit/SKILL.md": "bf0bc90de9888a001474754bbead18f87f59a7dec42ef001e3f398a23ca3f8a0",
   ".agents/skills/videocraft-cut-decision/SKILL.md": "9366ace7df4dce0dbcdc9256dbe5eefc9f1d022d118bdc3e505a910b9628207d",
 };
 const REQUIRED_TOKENS = {
