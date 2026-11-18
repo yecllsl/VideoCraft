@@ -14,8 +14,10 @@ opencode plugin add 'github:yecllsl/VideoCraft#main::path:plugin/videocraft'
 
 ```bash
 opencode plugin check
-opencode plugin update videocraft-opencode-plugin
+opencode plugin update
 ```
+
+只想更新这一个包时，用安装时的**完整目标串**：`opencode plugin update 'github:yecllsl/VideoCraft#main::path:plugin/videocraft'`。用 npm 包名 `videocraft-opencode-plugin` 会报 `Plugin is not configured`。首次安装后 `plugin list` 可能滞后一次调用才显示插件，必要时重启 OpenCode 服务。
 
 作者 push 到 `main` 后，用户机器上的插件**不会自动变化**：OpenCode 启动只检查更新，不替换已安装副本；只有执行 `opencode plugin update` 才会拉取新提交。`opencode plugin check` 只提示，不执行更新。本地路径安装与完整 commit hash 会被 `update` 跳过，因此不要改用这两种写法。
 
