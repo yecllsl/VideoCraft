@@ -92,7 +92,7 @@
 | G4 | 每任务之后 | `subagent-driven-development` 的 task review（spec 符合性 + 代码质量两轴）；反馈处理 `receiving-code-review`；打回 `references/fix-loop.md`（每任务 ≤5 轮） | `task-<N>-brief.md`、`review-<base7>..<head7>.diff`、implementer report、ledger 的 `minor (deferred)` / `parked` 行 | agent 评审，人只裁决 critical |
 | G5 | 整支出口 / 合入 | `subagent-driven-development` 的 `references/final-review.md` → `verification-before-completion` → `finishing-a-development-branch` | final review package、ledger rulings、验证命令输出；**删除 workspace 前**把结论与证据摘要回写 `.scratch/<主题>/progress.md` | 人签核合入 |
 
-G1 检查清单：验收标准均为「命令 + 期望输出」、spec 标了 test seam、术语已入 `GLOSSARY.md`、ADR 已落 `docs/adr/`、每条验收标准至少被一个 ticket 覆盖且无 ticket 超出 spec、blocking edges 完整。
+G1 检查清单：验收标准均为「命令 + 期望输出」、spec 标了 test seam、术语已入 `GLOSSARY.md`、ADR 已落 `docs/adr/`、每条验收标准至少被一个 ticket 覆盖且无 ticket 超出 spec、blocking edges 完整、版本一致性断言写明比较粒度（minor / patch）。
 
 `requesting-code-review` 不单独派发：G4 / G5 的 reviewer 由 `subagent-driven-development` 内部引用其 `code-reviewer.md`，另派一次即重复评审（不改变执行期「只用 Superpowers review 体系」的禁令）。SDD 产物落在执行所在的 working tree（本项目通常在服务端开发 checkout），客户端 `.scratch/` 只留门禁结论与证据摘要。
 

@@ -5,6 +5,7 @@
   - `/opt/videocraft/` 是服务端测试环境。
   - `/root/projects/videocraft/` 是服务端开发环境。
 - 在远端执行操作时，按上述路径区分测试与开发环境；不要混淆两者。
+- 远程写配置的引号约定：PowerShell 里整条 `ssh` 命令用单引号包裹、内层 bash 双引号原样保留，写完立即 `tail`/`grep` 验证。示例：`ssh ZZZ.Video 'printf "\n[caption]\ndevice = \"cuda\"\n" >> /opt/videocraft/videocraft.local.toml'`。
 - 三者职责：客户端工作目录只放配置、skills 与轻量记录，媒体和产物都在服务端 NAS；服务端开发环境用于实现与验证、无常驻服务；服务端测试环境是常驻 MCP / Worker、客户端默认连接的目标。下文及文档中的「开发环境 / 测试环境」均指这两个服务端环境。
 
 ### 环境现状（2026-11-05 核查与对齐）
