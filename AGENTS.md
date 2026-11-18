@@ -5,7 +5,8 @@
   - `/opt/videocraft/` 是服务端测试环境。
   - `/root/projects/videocraft/` 是服务端开发环境。
 - 在远端执行操作时，按上述路径区分测试与开发环境；不要混淆两者。
-- 远程写配置的引号约定：PowerShell 里整条 `ssh` 命令用单引号包裹、内层 bash 双引号原样保留，写完立即 `tail`/`grep` 验证。示例：`ssh ZZZ.Video 'printf "\n[caption]\ndevice = \"cuda\"\n" >> /opt/videocraft/videocraft.local.toml'`。
+- 远程执行约定：PowerShell 里整条 `ssh` 命令用单引号包裹、内层 bash 双引号原样保留。写配置用 `printf` 追加，写完立即 `tail`/`grep` 验证（示例：`ssh ZZZ.Video 'printf "\n[caption]\ndevice = \"cuda\"\n" >> /opt/videocraft/videocraft.local.toml'`）；传脚本执行时先把脚本写成**本地临时文件**，用 `Get-Content -Raw -Encoding UTF8 '<本地.py>' | ssh ZZZ.Video 'python3 -'` 从 stdin 喂入，执行后删除临时文件——不要尝试 here-doc 或本地变量拼接。
+- 远端 git push：两个 checkout 的 HTTPS remote 均无凭据。从本地 `gh auth token` 取 token，经 ssh stdin 读入远端变量，用 `git -C <checkout> push "https://yecllsl:${tok}@github.com/yecllsl/videocraft-mcp.git" main` 推送，用完 `unset tok`（token 不落盘、不进 git config）；该方式不刷新 `origin/main`，随后以同一 token `git fetch "https://yecllsl:${tok}@github.com/..." main:refs/remotes/origin/main` 同步引用。测试 checkout 无 remote，只做本地提交。
 - 三者职责：客户端工作目录只放配置、skills 与轻量记录，媒体和产物都在服务端 NAS；服务端开发环境用于实现与验证、无常驻服务；服务端测试环境是常驻 MCP / Worker、客户端默认连接的目标。下文及文档中的「开发环境 / 测试环境」均指这两个服务端环境。
 
 ### 环境现状（2026-11-05 核查与对齐）
