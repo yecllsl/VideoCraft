@@ -23,8 +23,8 @@ _Avoid_: namespace 选项、命名空间配置、客户端可覆盖的 namespace
 _Avoid_: 服务端发版、契约变更（未区分代码 / 文档 / 副本三层）
 
 **插件发布**:
-客户端仓库 `yecllsl/VideoCraft` 的 main push；插件跟踪 `#main` 不锁 commit，push 即对所有用户可见。
-_Avoid_: 同步发布、同批次原子发布（跨仓无原子性）
+客户端仓库 `yecllsl/VideoCraft` main 分支上插件目录的源码变更；git-source 插件在用户侧执行 `opencode plugin update` 后才更新本地已安装副本，作者 push 本身不改变用户机器上的插件。
+_Avoid_: push 即可见、自动更新、同步发布、同批次原子发布
 
 ## 文档与分发
 
