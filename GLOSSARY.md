@@ -40,6 +40,10 @@ _Avoid_: 移动、stub、第二份正文
 OpenCode 内由 `ctx.reference.transform` 注册的 `videocraft-contract`，提供按需 attach 的访问入口，必须带 `description`；不是事实源，也不进 MCP 预检。
 _Avoid_: 单一事实源、reference 预检、自动注入的上下文
 
+**用户安装块**:
+随插件 README 分发的一段可整块复制的 PowerShell 命令：掩码录入令牌、把 MCP / SMB / 令牌写入用户级环境变量、执行 git-source `plugin add` 并重启 OpenCode 服务；用户不需要懂 git-source 语法或环境变量名，也不改 `opencode.json`。
+_Avoid_: 安装向导、首次运行向导、远程脚本拉取执行（一期不做）
+
 **插件钩子映射**:
 OpenCode v2.2.7 运行时实证：插件定义为 `export default { id, setup }`，`setup(ctx)` 用 `ctx.mcp.transform`（`draft.set(name, config)`）、`ctx.skill.transform`（`draft.add(info)`）、`ctx.reference.transform`（`draft.add(别名, source)`）注册三类能力；宿主自动发现 `.opencode/plugin/` 下的文件与含 `index.js` 的目录。
 _Avoid_: `config.transform`、`options.transform`（上一轮原型笔记的误记；`ctx.config` 不存在、`ctx.options.transform` 不存在）
