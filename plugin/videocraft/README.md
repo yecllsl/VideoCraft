@@ -4,14 +4,27 @@
 
 ## 安装
 
-令牌由作者人工发放；未拿到请先索取。整块复制下面命令到 PowerShell 执行：
+令牌由作者人工发放；未拿到请先索取。安装分两步：
+
+**第 1 步（用户本机执行，含令牌）**：粘贴到 PowerShell 由本人执行。令牌只在本机掩码输入，不要发给 agent、也不要写进对话或文件。
 
 ```powershell
 $u='http://192.168.88.4:8000'; $s='192.168.100.58'
 $t=[Net.NetworkCredential]::new('',(Read-Host 'VideoCraft 令牌' -AsSecureString)).Password
 foreach($p in @(@('VIDEOCRAFT_MCP_URL',$u),@('VIDEOCRAFT_SMB_HOST',$s),@('VIDEOCRAFT_MCP_TOKEN',$t))){
   [Environment]::SetEnvironmentVariable($p[0],$p[1],'User')
-  [Environment]::SetEnvironmentVariable($p[0],$p[1],'Process')
+}
+```
+
+**第 2 步（用户或 agent 执行，不含令牌）**：可整块交给 agent 代跑。它先做前置检查，再把用户级变量带入当前进程（避免跨 shell 丢失），然后安装并重启服务。任何一行失败都会以大写标记退出，便于直接判定。
+
+```powershell
+if(-not (Get-Command opencode -ErrorAction SilentlyContinue)){ 'OPENCODE_NOT_FOUND'; exit 1 }
+if(-not (Get-Command git -ErrorAction SilentlyContinue)){ 'GIT_NOT_FOUND'; exit 1 }
+foreach($n in 'VIDEOCRAFT_MCP_URL','VIDEOCRAFT_SMB_HOST','VIDEOCRAFT_MCP_TOKEN'){
+  $v=[Environment]::GetEnvironmentVariable($n,'User')
+  if(-not $v){ "MISSING_USER_ENV=$n"; exit 1 }
+  [Environment]::SetEnvironmentVariable($n,$v,'Process')
 }
 opencode plugin add 'github:yecllsl/VideoCraft#main::path:plugin/videocraft'
 opencode service restart
