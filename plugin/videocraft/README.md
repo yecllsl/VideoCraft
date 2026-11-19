@@ -4,9 +4,18 @@
 
 ## 安装
 
-```bash
+```powershell
+$u='http://192.168.88.4:8000'; $s='192.168.100.58'
+$t=[Net.NetworkCredential]::new('',(Read-Host 'VideoCraft 令牌' -AsSecureString)).Password
+foreach($p in @(@('VIDEOCRAFT_MCP_URL',$u),@('VIDEOCRAFT_SMB_HOST',$s),@('VIDEOCRAFT_MCP_TOKEN',$t))){
+  [Environment]::SetEnvironmentVariable($p[0],$p[1],'User')
+  [Environment]::SetEnvironmentVariable($p[0],$p[1],'Process')
+}
 opencode plugin add 'github:yecllsl/VideoCraft#main::path:plugin/videocraft'
+opencode service restart
 ```
+
+验证：`opencode plugin list` 应显示 `videocraft` 与 git-source 目标；若首次为空，重启 OpenCode 服务后重试。若新开终端仍报缺变量，重开终端或重新登录。
 
 需 OpenCode V2 2.0.15 或更新版本（早期版本不支持 `::path:` 子目录选择器）。
 
