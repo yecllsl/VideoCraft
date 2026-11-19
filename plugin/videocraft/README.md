@@ -4,6 +4,8 @@
 
 ## 安装
 
+令牌由作者人工发放；未拿到请先索取。整块复制下面命令到 PowerShell 执行：
+
 ```powershell
 $u='http://192.168.88.4:8000'; $s='192.168.100.58'
 $t=[Net.NetworkCredential]::new('',(Read-Host 'VideoCraft 令牌' -AsSecureString)).Password
