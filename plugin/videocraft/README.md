@@ -16,7 +16,7 @@ foreach($p in @(@('VIDEOCRAFT_MCP_URL',$u),@('VIDEOCRAFT_SMB_HOST',$s),@('VIDEOC
 }
 ```
 
-**第 2 步（可整块交给 agent，不要只复制最后两行）**：先做前置检查，再把用户级三个变量读入当前进程——重启后的服务继承这个 shell 的环境变量，否则插件会在缺变量时 fail-fast。注意：本块会把用户级令牌读进执行它的 shell；若由 agent 代跑，跑完即关闭该会话，不要在其后打印环境变量。全程以大写标记报告结果，最后一行 `INSTALL_OK=1` 才代表成功。
+**第 2 步（可整块交给 agent，不要只复制 `opencode` 那两行）**：先做前置检查，再把用户级三个变量读入当前进程——重启后的服务继承这个 shell 的环境变量，否则插件会在缺变量时 fail-fast。注意：本块会把用户级令牌读进执行它的 shell；若由 agent 代跑，跑完即关闭该会话，不要在其后打印环境变量。全程以大写标记报告结果，最后一行 `INSTALL_OK=1` 才代表成功；在交互式窗口里失败会以 `exit 1` 结束，可能直接关闭窗口，粘贴前请先看最后一行标记。
 
 ```powershell
 if(-not (Get-Command opencode -ErrorAction SilentlyContinue)){ 'OPENCODE_NOT_FOUND'; exit 1 }
@@ -28,9 +28,9 @@ foreach($n in 'VIDEOCRAFT_MCP_URL','VIDEOCRAFT_SMB_HOST','VIDEOCRAFT_MCP_TOKEN')
 }
 if(-not $env:VIDEOCRAFT_MCP_TOKEN){ 'PROCESS_ENV_LOST'; exit 1 }
 opencode plugin add 'github:yecllsl/VideoCraft#main::path:plugin/videocraft'
-if($LASTEXITCODE -ne 0){ 'PLUGIN_ADD_FAILED'; exit 1 }
+if($LASTEXITCODE -gt 0){ 'PLUGIN_ADD_FAILED'; exit 1 }
 opencode service restart
-if($LASTEXITCODE -ne 0){ 'SERVICE_RESTART_FAILED'; exit 1 }
+if($LASTEXITCODE -gt 0){ 'SERVICE_RESTART_FAILED'; exit 1 }
 'INSTALL_OK=1'
 ```
 
